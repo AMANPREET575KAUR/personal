@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Compiler</title>
+  <style>
+    /* Add some basic styling */
+  </style>
+</head>
+<body>
+  <div>
+    <h2>Code Compiler</h2>
+    <textarea id="codeEditor" rows="10" cols="50"></textarea><br>
+    <select id="languageSelector">
+      <option value="0">Python</option>
+      <option value="4">JavaScript</option>
+      <option value="7">C</option>
+      <option value="77">C++</option>
+      <option value="8">Java</option>
+    </select><br>
+    <button id="compileBtn">Compile</button>
+    <h3>Output:</h3>
+    <pre id="outputConsole"></pre>
+  </div>
+
+  <script>
+    document.getElementById('compileBtn').addEventListener('click', function() {
+      const code = document.getElementById('codeEditor').value;
+      const langId = document.getElementById('languageSelector').value;
+
+      // Send POST request to execute code
+      fetch('https://codequotient.com/api/executeCode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, langId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          document.getElementById('outputConsole').textContent = data.error;
+        } else {
+          const codeId = data.codeId;
+          let interval = setInterval(() => {
+            // Send GET request to check for the result
+            fetch(`https://codequotient.com/api/codeResult/${codeId}`)
+              .then(res => res.json())
+              .then(result => {
+                if (result.data) {
+                  if (result.data.output) {
+                    document.getElementById('outputConsole').textContent = result.data.output;
+                  } else if (result.data.errors) {
+                    document.getElementById('outputConsole').textContent = result.data.errors;
+                  }
+                  clearInterval(interval); // Clear the interval once the result is fetched
+                }
+              });
+          }, 3000); // Check every 3 seconds
+        }
+      })
+      .catch(err => {
+        document.getElementById('outputConsole').textContent = 'Error: ' + err;
+      });
+    });
+  </script>
+</body>
+</html>
